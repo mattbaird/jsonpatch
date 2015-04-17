@@ -19,7 +19,6 @@ generate format like jsonpatch.com specifies. Here's an example of the patch for
 
 ```
 The API is super simple
-
 #example
 ```go
 package main
@@ -43,3 +42,5 @@ func main() {
 	}
 }
 ```
+
+This code needs more tests, as it's a highly recursive, type-fiddly monster. It's not a lot of code, but it has to deal with a lot of complexity.
