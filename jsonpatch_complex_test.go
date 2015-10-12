@@ -1,7 +1,6 @@
 package jsonpatch
 
 import (
-	//	"fmt"
 	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
@@ -36,7 +35,8 @@ func TestComplexOneIntReplace(t *testing.T) {
 	change := patch[0]
 	assert.Equal(t, change.Operation, "replace", "they should be equal")
 	assert.Equal(t, change.Path, "/e/f", "they should be equal")
-	assert.Equal(t, change.Value, 100, "they should be equal")
+	var expected float64 = 100
+	assert.Equal(t, change.Value, expected, "they should be equal")
 }
 
 func TestComplexOneAdd(t *testing.T) {
