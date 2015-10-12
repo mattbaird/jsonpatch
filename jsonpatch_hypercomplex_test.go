@@ -177,5 +177,5 @@ func TestHyperComplexBoolReplace(t *testing.T) {
 	change = patch[2]
 	assert.Equal(t, change.Operation, "remove", "they should be equal")
 	assert.Equal(t, change.Path, "/goods/2/topping/2", "they should be equal")
-	assert.Equal(t, map[string]interface{}{"id": "5003", "type": "Chocolate"}, change.Value, "they should be equal")
+	assert.Equal(t, nil, change.Value, "they should be equal")
 }
