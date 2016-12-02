@@ -1,6 +1,7 @@
 package jsonpatch
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -18,6 +19,24 @@ type JsonPatchOperation struct {
 func (j *JsonPatchOperation) Json() string {
 	b, _ := json.Marshal(j)
 	return string(b)
+}
+
+func (j *JsonPatchOperation) MarshalJSON() ([]byte, error) {
+	var b bytes.Buffer
+	b.WriteString("{")
+	b.WriteString(fmt.Sprintf(`"op":"%s"`, j.Operation))
+	b.WriteString(fmt.Sprintf(`,"path":"%s"`, j.Path))
+	// Consider omitting Value for non-nullable operations.
+	if j.Value != nil || j.Operation == "replace" || j.Operation == "add" {
+		v, err := json.Marshal(j.Value)
+		if err != nil {
+			return nil, err
+		}
+		b.WriteString(`,"value":`)
+		b.Write(v)
+	}
+	b.WriteString("}")
+	return b.Bytes(), nil
 }
 
 type ByPath []JsonPatchOperation
