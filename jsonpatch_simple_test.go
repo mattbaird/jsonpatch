@@ -12,7 +12,18 @@ var simpleC = `{"a":100, "b":100, "c":"hello"}`
 var simpleD = `{"a":100, "b":200, "c":"hello", "d":"foo"}`
 var simpleE = `{"a":100, "b":200}`
 var simplef = `{"a":100, "b":100, "d":"foo"}`
+var simpleG = `{"a":100, "b":null, "d":"foo"}`
 var empty = `{}`
+
+func TestOneNullReplace(t *testing.T) {
+	patch, e := CreatePatch([]byte(simplef), []byte(simpleG))
+	assert.NoError(t, e)
+	assert.Equal(t, len(patch), 1, "they should be equal")
+	change := patch[0]
+	assert.Equal(t, change.Operation, "replace", "they should be equal")
+	assert.Equal(t, change.Path, "/b", "they should be equal")
+	assert.Equal(t, change.Value, nil, "they should be equal")
+}
 
 func TestSame(t *testing.T) {
 	patch, e := CreatePatch([]byte(simpleA), []byte(simpleA))
