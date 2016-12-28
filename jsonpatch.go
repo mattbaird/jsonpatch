@@ -233,21 +233,18 @@ func compareArray(av, bv []interface{}, p string) []JsonPatchOperation {
 // processArray processes `av` and `bv` calling `applyOp` whenever a value is absent.
 // It keeps track of which indexes have already had `applyOp` called for and automatically skips them so you can process duplicate objects correctly.
 func processArray(av, bv []interface{}, applyOp func(i int, value interface{})) {
-	foundIndexes := make(map[int]int, len(av))
+	foundIndexes := make(map[int]struct{}, len(av))
+	reverseFoundIndexes := make(map[int]struct{}, len(av))
 	for i, v := range av {
 		for i2, v2 := range bv {
-			alreadyFoundThisIndex := true
-			for _, foundI2 := range foundIndexes {
-				if foundI2 == i2 {
-					alreadyFoundThisIndex = false
-					break
-				}
-			}
-			if !alreadyFoundThisIndex {
+			if _, ok := reverseFoundIndexes[i2]; ok {
+				// We already found this index.
 				continue
 			}
 			if reflect.DeepEqual(v, v2) {
-				foundIndexes[i] = i2
+				// Mark this index as found since it matches exactly.
+				foundIndexes[i] = struct{}{}
+				reverseFoundIndexes[i2] = struct{}{}
 				break
 			}
 		}
