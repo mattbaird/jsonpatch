@@ -214,9 +214,10 @@ func handleValues(av, bv interface{}, p string, patch []JsonPatchOperation) ([]J
 
 func compareArray(av, bv []interface{}, p string) []JsonPatchOperation {
 	retval := []JsonPatchOperation{}
-	//	var err error
+
 	for i, v := range av {
 		found := false
+		// NOTE it is fine to range over all of bv since we are just removing elements.
 		for _, v2 := range bv {
 			if reflect.DeepEqual(v, v2) {
 				found = true
@@ -227,14 +228,27 @@ func compareArray(av, bv []interface{}, p string) []JsonPatchOperation {
 		}
 	}
 
+	// Find elements that need to be added.
+	// NOTE we keep track of which indexes we've already found so that duplicate objects work correctly.
+	foundIndexes := make(map[int]int, len(bv))
 	for i, v := range bv {
-		found := false
-		for _, v2 := range av {
+		for i2, v2 := range av {
+			alreadyFoundThisIndex := true
+			for _, foundI2 := range foundIndexes {
+				if foundI2 == i2 {
+					alreadyFoundThisIndex = false
+					break
+				}
+			}
+			if !alreadyFoundThisIndex {
+				continue
+			}
 			if reflect.DeepEqual(v, v2) {
-				found = true
+				foundIndexes[i] = i2
+				break
 			}
 		}
-		if !found {
+		if _, ok := foundIndexes[i]; !ok {
 			retval = append(retval, NewPatch("add", makePath(p, i), v))
 		}
 	}
