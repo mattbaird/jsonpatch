@@ -212,27 +212,30 @@ func handleValues(av, bv interface{}, p string, patch []JsonPatchOperation) ([]J
 	return patch, nil
 }
 
+// compareArray generates remove and add operations for `av` and `bv`.
 func compareArray(av, bv []interface{}, p string) []JsonPatchOperation {
 	retval := []JsonPatchOperation{}
 
-	for i, v := range av {
-		found := false
-		// NOTE it is fine to range over all of bv since we are just removing elements.
-		for _, v2 := range bv {
-			if reflect.DeepEqual(v, v2) {
-				found = true
-			}
-		}
-		if !found {
-			retval = append(retval, NewPatch("remove", makePath(p, i), nil))
-		}
-	}
+	// Find elements that need to be removed
+	processArray(av, bv, func(i int, value interface{}) {
+		retval = append(retval, NewPatch("remove", makePath(p, i), nil))
+	})
 
 	// Find elements that need to be added.
-	// NOTE we keep track of which indexes we've already found so that duplicate objects work correctly.
-	foundIndexes := make(map[int]int, len(bv))
-	for i, v := range bv {
-		for i2, v2 := range av {
+	// NOTE we pass in `bv` then `av` so that processArray can find the missing elements.
+	processArray(bv, av, func(i int, value interface{}) {
+		retval = append(retval, NewPatch("add", makePath(p, i), value))
+	})
+
+	return retval
+}
+
+// processArray processes `av` and `bv` calling `applyOp` whenever a value is absent.
+// It keeps track of which indexes have already had `applyOp` called for and automatically skips them so you can process duplicate objects correctly.
+func processArray(av, bv []interface{}, applyOp func(i int, value interface{})) {
+	foundIndexes := make(map[int]int, len(av))
+	for i, v := range av {
+		for i2, v2 := range bv {
 			alreadyFoundThisIndex := true
 			for _, foundI2 := range foundIndexes {
 				if foundI2 == i2 {
@@ -249,9 +252,7 @@ func compareArray(av, bv []interface{}, p string) []JsonPatchOperation {
 			}
 		}
 		if _, ok := foundIndexes[i]; !ok {
-			retval = append(retval, NewPatch("add", makePath(p, i), v))
+			applyOp(i, v)
 		}
 	}
-
-	return retval
 }
