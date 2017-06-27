@@ -186,7 +186,10 @@ func handleValues(av, bv interface{}, p string, patch []JsonPatchOperation) ([]J
 			patch = append(patch, NewPatch("replace", p, bv))
 		}
 	case []interface{}:
-		bt := bv.([]interface{})
+		bt, ok := bv.([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("expected []interface{} but was %T", bv)
+		}
 		if len(at) != len(bt) {
 			// arrays are not the same
 			patch = append(patch, compareArray(at, bt, p)...)
