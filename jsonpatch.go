@@ -220,6 +220,7 @@ func compareArray(av, bv []interface{}, p string) []JsonPatchOperation {
 		for _, v2 := range bv {
 			if reflect.DeepEqual(v, v2) {
 				found = true
+				break
 			}
 		}
 		if !found {
@@ -232,6 +233,7 @@ func compareArray(av, bv []interface{}, p string) []JsonPatchOperation {
 		for _, v2 := range av {
 			if reflect.DeepEqual(v, v2) {
 				found = true
+				break
 			}
 		}
 		if !found {
