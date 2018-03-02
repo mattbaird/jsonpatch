@@ -90,31 +90,3 @@ func TestVsEmpty(t *testing.T) {
 	assert.Equal(t, change.Operation, "remove", "they should be equal")
 	assert.Equal(t, change.Path, "/c", "they should be equal")
 }
-
-func BenchmarkBigArrays(b *testing.B) {
-	var a1, a2 []interface{}
-	a1 = make([]interface{}, 100)
-	a2 = make([]interface{}, 101)
-
-	for i := 0; i < 100; i++ {
-		a1[i] = i
-		a2[i+1] = i
-	}
-	for i := 0; i < b.N; i++ {
-		compareArray(a1, a2, "/")
-	}
-}
-
-func BenchmarkBigArrays2(b *testing.B) {
-	var a1, a2 []interface{}
-	a1 = make([]interface{}, 100)
-	a2 = make([]interface{}, 101)
-
-	for i := 0; i < 100; i++ {
-		a1[i] = i
-		a2[i] = i
-	}
-	for i := 0; i < b.N; i++ {
-		compareArray(a1, a2, "/")
-	}
-}
