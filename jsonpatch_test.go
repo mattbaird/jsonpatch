@@ -700,6 +700,7 @@ func TestCreatePatch(t *testing.T) {
 		{"Array:BoolReplace", arraySrc, arrayDst},
 		{"Array:AlmostSame", `{"Lines":[1,2,3,4,5,6,7,8,9,10]}`, `{"Lines":[2,3,4,5,6,7,8,9,10,11]}`},
 		{"Array:Remove", `{"x":["A", "B", "C"]}`, `{"x":["D"]}`},
+		{"Array:EditDistance", `{"letters":["A","B","C","D","E","F","G","H","I","J","K"]}`, `{"letters":["L","M","N"]}`},
 		// complex types
 		{"Complex:Same", complexBase, complexBase},
 		{"Complex:OneStringReplaceInArray", complexBase, complexA},
