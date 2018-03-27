@@ -1,9 +1,201 @@
-package jsonpatch
+package jsonpatch_test
 
 import (
-	"github.com/stretchr/testify/assert"
+	"encoding/json"
 	"testing"
+
+	"github.com/appscode/jsonpatch"
+	jp "github.com/evanphx/json-patch"
+	"github.com/stretchr/testify/assert"
 )
+
+var simpleA = `{"a":100, "b":200, "c":"hello"}`
+var simpleB = `{"a":100, "b":200, "c":"goodbye"}`
+var simpleC = `{"a":100, "b":100, "c":"hello"}`
+var simpleD = `{"a":100, "b":200, "c":"hello", "d":"foo"}`
+var simpleE = `{"a":100, "b":200}`
+var simplef = `{"a":100, "b":100, "d":"foo"}`
+var simpleG = `{"a":100, "b":null, "d":"foo"}`
+var empty = `{}`
+
+var arraySrc = `
+{
+  "spec": {
+    "loadBalancerSourceRanges": [
+      "192.101.0.0/16",
+      "192.0.0.0/24"
+    ]
+  }
+}
+`
+
+var arrayDst = `
+{
+  "spec": {
+    "loadBalancerSourceRanges": [
+      "192.101.0.0/24"
+    ]
+  }
+}
+`
+
+var complexBase = `{"a":100, "b":[{"c1":"hello", "d1":"foo"},{"c2":"hello2", "d2":"foo2"} ], "e":{"f":200, "g":"h", "i":"j"}}`
+var complexA = `{"a":100, "b":[{"c1":"goodbye", "d1":"foo"},{"c2":"hello2", "d2":"foo2"} ], "e":{"f":200, "g":"h", "i":"j"}}`
+var complexB = `{"a":100, "b":[{"c1":"hello", "d1":"foo"},{"c2":"hello2", "d2":"foo2"} ], "e":{"f":100, "g":"h", "i":"j"}}`
+var complexC = `{"a":100, "b":[{"c1":"hello", "d1":"foo"},{"c2":"hello2", "d2":"foo2"} ], "e":{"f":200, "g":"h", "i":"j"}, "k":[{"l":"m"}, {"l":"o"}]}`
+var complexD = `{"a":100, "b":[{"c1":"hello", "d1":"foo"},{"c2":"hello2", "d2":"foo2"}, {"c3":"hello3", "d3":"foo3"} ], "e":{"f":200, "g":"h", "i":"j"}}`
+var complexE = `{"a":100, "b":[{"c1":"hello", "d1":"foo"},{"c2":"hello2", "d2":"foo2"} ], "e":{"f":200, "g":"h", "i":"j"}}`
+
+var point = `{"type":"Point", "coordinates":[0.0, 1.0]}`
+var lineString = `{"type":"LineString", "coordinates":[[0.0, 1.0], [2.0, 3.0]]}`
+
+var hyperComplexBase = `
+{
+	"goods": [
+	{
+		"id": "0001",
+		"type": "donut",
+		"name": "Cake",
+		"ppu": 0.55,
+		"batters":
+			{
+				"batter":
+					[
+						{ "id": "1001", "type": "Regular" },
+						{ "id": "1002", "type": "Chocolate" },
+						{ "id": "1003", "type": "Blueberry" },
+						{ "id": "1004", "type": "Devil's Food" }
+					]
+			},
+		"topping":
+			[
+				{ "id": "5001", "type": "None" },
+				{ "id": "5002", "type": "Glazed" },
+				{ "id": "5005", "type": "Sugar" },
+				{ "id": "5007", "type": "Powdered Sugar" },
+				{ "id": "5006", "type": "Chocolate with Sprinkles" },
+				{ "id": "5003", "type": "Chocolate" },
+				{ "id": "5004", "type": "Maple" }
+			]
+	},
+	{
+		"id": "0002",
+		"type": "donut",
+		"name": "Raised",
+		"ppu": 0.55,
+		"batters":
+			{
+				"batter":
+					[
+						{ "id": "1001", "type": "Regular" }
+					]
+			},
+		"topping":
+			[
+				{ "id": "5001", "type": "None" },
+				{ "id": "5002", "type": "Glazed" },
+				{ "id": "5005", "type": "Sugar" },
+				{ "id": "5003", "type": "Chocolate" },
+				{ "id": "5004", "type": "Maple" }
+			]
+	},
+	{
+		"id": "0003",
+		"type": "donut",
+		"name": "Old Fashioned",
+		"ppu": 0.55,
+		"batters":
+			{
+				"batter":
+					[
+						{ "id": "1001", "type": "Regular" },
+						{ "id": "1002", "type": "Chocolate" }
+					]
+			},
+		"topping":
+			[
+				{ "id": "5001", "type": "None" },
+				{ "id": "5002", "type": "Glazed" },
+				{ "id": "5003", "type": "Chocolate" },
+				{ "id": "5004", "type": "Maple" }
+			]
+	}
+]
+}`
+
+var hyperComplexA = `
+{
+	"goods": [
+	{
+		"id": "0001",
+		"type": "donut",
+		"name": "Cake",
+		"ppu": 0.55,
+		"batters":
+			{
+				"batter":
+					[
+						{ "id": "1001", "type": "Regular" },
+						{ "id": "1002", "type": "Chocolate" },
+						{ "id": "1003", "type": "Strawberry" },
+						{ "id": "1004", "type": "Devil's Food" }
+					]
+			},
+		"topping":
+			[
+				{ "id": "5001", "type": "None" },
+				{ "id": "5002", "type": "Glazed" },
+				{ "id": "5005", "type": "Sugar" },
+				{ "id": "5007", "type": "Powdered Sugar" },
+				{ "id": "5006", "type": "Chocolate with Sprinkles" },
+				{ "id": "5003", "type": "Chocolate" },
+				{ "id": "5004", "type": "Maple" }
+			]
+	},
+	{
+		"id": "0002",
+		"type": "donut",
+		"name": "Raised",
+		"ppu": 0.55,
+		"batters":
+			{
+				"batter":
+					[
+						{ "id": "1001", "type": "Regular" }
+					]
+			},
+		"topping":
+			[
+				{ "id": "5001", "type": "None" },
+				{ "id": "5002", "type": "Glazed" },
+				{ "id": "5005", "type": "Sugar" },
+				{ "id": "5003", "type": "Chocolate" },
+				{ "id": "5004", "type": "Maple" }
+			]
+	},
+	{
+		"id": "0003",
+		"type": "donut",
+		"name": "Old Fashioned",
+		"ppu": 0.55,
+		"batters":
+			{
+				"batter":
+					[
+						{ "id": "1001", "type": "Regular" },
+						{ "id": "1002", "type": "Chocolate" },
+						{ "id": "1003", "type": "Vanilla" }
+					]
+			},
+		"topping":
+			[
+				{ "id": "5001", "type": "None" },
+				{ "id": "5002", "type": "Glazed" },
+				{ "id": "5004", "type": "Maple" }
+			]
+	}
+]
+}`
 
 var superComplexBase = `
 {
@@ -489,18 +681,65 @@ var superComplexA = `
 	}
 }`
 
-func TestSuperComplexSame(t *testing.T) {
-	patch, e := CreatePatch([]byte(superComplexBase), []byte(superComplexBase))
-	assert.NoError(t, e)
-	assert.Equal(t, 0, len(patch), "they should be equal")
+func TestCreatePatch(t *testing.T) {
+	cases := []struct {
+		name string
+		src  string
+		dst  string
+	}{
+		// simple
+		{"Simple:OneNullReplace", simplef, simpleG},
+		{"Simple:Same", simpleA, simpleA},
+		{"Simple:OneStringReplace", simpleA, simpleB},
+		{"Simple:OneIntReplace", simpleA, simpleC},
+		{"Simple:OneAdd", simpleA, simpleD},
+		{"Simple:OneRemove", simpleA, simpleE},
+		{"Simple:VsEmpty", simpleA, empty},
+		// array types
+		{"Array:Same", arraySrc, arraySrc},
+		{"Array:BoolReplace", arraySrc, arrayDst},
+		{"Array:AlmostSame", `{"Lines":[1,2,3,4,5,6,7,8,9,10]}`, `{"Lines":[2,3,4,5,6,7,8,9,10,11]}`},
+		{"Array:Remove", `{"x":["A", "B", "C"]}`, `{"x":["D"]}`},
+		{"Array:EditDistance", `{"letters":["A","B","C","D","E","F","G","H","I","J","K"]}`, `{"letters":["L","M","N"]}`},
+		// complex types
+		{"Complex:Same", complexBase, complexBase},
+		{"Complex:OneStringReplaceInArray", complexBase, complexA},
+		{"Complex:OneIntReplace", complexBase, complexB},
+		{"Complex:OneAdd", complexBase, complexC},
+		{"Complex:OneAddToArray", complexBase, complexC},
+		{"Complex:VsEmpty", complexBase, empty},
+		// geojson
+		{"GeoJson:PointLineStringReplace", point, lineString},
+		{"GeoJson:LineStringPointReplace", lineString, point},
+		// HyperComplex
+		{"HyperComplex:Same", hyperComplexBase, hyperComplexBase},
+		{"HyperComplex:BoolReplace", hyperComplexBase, hyperComplexA},
+		// SuperComplex
+		{"SuperComplex:Same", superComplexBase, superComplexBase},
+		{"SuperComplex:BoolReplace", superComplexBase, superComplexA},
+	}
+	for _, c := range cases {
+		t.Run(c.name+"[src->dst]", func(t *testing.T) {
+			check(t, c.src, c.dst)
+		})
+		t.Run(c.name+"[dst->src]", func(t *testing.T) {
+			check(t, c.dst, c.src)
+		})
+	}
 }
 
-func TestSuperComplexBoolReplace(t *testing.T) {
-	patch, e := CreatePatch([]byte(superComplexBase), []byte(superComplexA))
-	assert.NoError(t, e)
-	assert.Equal(t, 1, len(patch), "they should be equal")
-	change := patch[0]
-	assert.Equal(t, "replace", change.Operation, "they should be equal")
-	assert.Equal(t, "/attributes/attribute-key/36/properties/visible", change.Path, "they should be equal")
-	assert.Equal(t, false, change.Value, "they should be equal")
+func check(t *testing.T, src, dst string) {
+	patch, err := jsonpatch.CreatePatch([]byte(src), []byte(dst))
+	assert.Nil(t, err)
+
+	data, err := json.Marshal(patch)
+	assert.Nil(t, err)
+
+	p2, err := jp.DecodePatch(data)
+	assert.Nil(t, err)
+
+	d2, err := p2.Apply([]byte(src))
+	assert.Nil(t, err)
+
+	assert.JSONEq(t, dst, string(d2))
 }

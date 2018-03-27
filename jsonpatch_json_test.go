@@ -1,19 +1,21 @@
-package jsonpatch
+package jsonpatch_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/appscode/jsonpatch"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMarshalNullableValue(t *testing.T) {
-	p1 := JsonPatchOperation{
+	p1 := jsonpatch.Operation{
 		Operation: "replace",
 		Path:      "/a1",
 		Value:     nil,
 	}
 	assert.JSONEq(t, `{"op":"replace", "path":"/a1","value":null}`, p1.Json())
 
-	p2 := JsonPatchOperation{
+	p2 := jsonpatch.Operation{
 		Operation: "replace",
 		Path:      "/a2",
 		Value:     "v2",
@@ -22,7 +24,7 @@ func TestMarshalNullableValue(t *testing.T) {
 }
 
 func TestMarshalNonNullableValue(t *testing.T) {
-	p1 := JsonPatchOperation{
+	p1 := jsonpatch.Operation{
 		Operation: "remove",
 		Path:      "/a1",
 	}
