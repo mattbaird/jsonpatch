@@ -681,6 +681,29 @@ var superComplexA = `
 	}
 }`
 
+var (
+	oldDeployment = `{
+  "apiVersion": "apps/v1beta1",
+  "kind": "Deployment",
+  "metadata": {
+    "annotations": {
+      "k8s.io/app": "busy-dep"
+    }
+  }
+}`
+
+	newDeployment = `{
+  "apiVersion": "apps/v1beta1",
+  "kind": "Deployment",
+  "metadata": {
+    "annotations": {
+      "k8s.io/app": "busy-dep",
+      "docker.com/commit": "github.com/myrepo#xyz"
+    }
+  }
+}`
+)
+
 func TestCreatePatch(t *testing.T) {
 	cases := []struct {
 		name string
@@ -717,6 +740,8 @@ func TestCreatePatch(t *testing.T) {
 		// SuperComplex
 		{"SuperComplex:Same", superComplexBase, superComplexBase},
 		{"SuperComplex:BoolReplace", superComplexBase, superComplexA},
+		// map
+		{"Kubernetes:Annotations", oldDeployment, newDeployment},
 	}
 	for _, c := range cases {
 		t.Run(c.name+"[src->dst]", func(t *testing.T) {
