@@ -704,6 +704,41 @@ var (
 }`
 )
 
+
+var (
+	oldNestedObj = `{
+  "apiVersion": "kubedb.com/v1alpha1",
+  "kind": "Elasticsearch",
+  "metadata": {
+    "name": "quick-elasticsearch",
+    "namespace": "demo"
+  },
+  "spec": {
+    "doNotPause": true,
+    "version": "5.6"
+  }
+}`
+
+	newNestedObj = `{
+  "apiVersion": "kubedb.com/v1alpha1",
+  "kind": "Elasticsearch",
+  "metadata": {
+    "name": "quick-elasticsearch",
+    "namespace": "demo"
+  },
+  "spec": {
+    "doNotPause": true,
+    "version": "5.6",
+    "storageType": "Durable",
+    "updateStrategy": {
+      "type": "RollingUpdate"
+    },
+    "terminationPolicy": "Pause"
+  }
+}`
+)
+
+
 func TestCreatePatch(t *testing.T) {
 	cases := []struct {
 		name string
@@ -742,6 +777,8 @@ func TestCreatePatch(t *testing.T) {
 		{"SuperComplex:BoolReplace", superComplexBase, superComplexA},
 		// map
 		{"Kubernetes:Annotations", oldDeployment, newDeployment},
+		// crd with nested object
+		{"Nested Member Object", oldNestedObj, newNestedObj},
 	}
 	for _, c := range cases {
 		t.Run(c.name+"[src->dst]", func(t *testing.T) {
