@@ -10,18 +10,21 @@ import (
 
 var errBadJSONDoc = fmt.Errorf("Invalid JSON Document")
 
-type JsonPatchOperation struct {
+// Operation operation struct
+type Operation struct {
 	Operation string      `json:"op"`
 	Path      string      `json:"path"`
 	Value     interface{} `json:"value,omitempty"`
 }
 
-func (j *JsonPatchOperation) Json() string {
+// JSON returns a patch operation Json representation
+func (j *Operation) JSON() string {
 	b, _ := json.Marshal(j)
 	return string(b)
 }
 
-func (j *JsonPatchOperation) MarshalJSON() ([]byte, error) {
+// MarshalJSON for patch operations
+func (j *Operation) MarshalJSON() ([]byte, error) {
 	var b bytes.Buffer
 	b.WriteString("{")
 	b.WriteString(fmt.Sprintf(`"op":"%s"`, j.Operation))
@@ -39,34 +42,52 @@ func (j *JsonPatchOperation) MarshalJSON() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-type ByPath []JsonPatchOperation
+// ByPath array of patch operation structs
+type ByPath []Operation
 
 func (a ByPath) Len() int           { return len(a) }
 func (a ByPath) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByPath) Less(i, j int) bool { return a[i].Path < a[j].Path }
 
-func NewPatch(operation, path string, value interface{}) JsonPatchOperation {
-	return JsonPatchOperation{Operation: operation, Path: path, Value: value}
+// NewPatch creates a patch operation struct
+func NewPatch(operation, path string, value interface{}) Operation {
+	return Operation{Operation: operation, Path: path, Value: value}
 }
 
 // CreatePatch creates a patch as specified in http://jsonpatch.com/
 //
 // 'a' is original, 'b' is the modified document. Both are to be given as json encoded content.
-// The function will return an array of JsonPatchOperations
+// The function will return an array of Operations
 //
 // An error will be returned if any of the two documents are invalid.
-func CreatePatch(a, b []byte) ([]JsonPatchOperation, error) {
+func CreatePatch(a, b []byte) ([]Operation, error) {
+	// TODO:
+	// [{"created":1556002860865228300,"updated":0,"index":"1","data":"ey"}]
+	// [{"created":1556002860865228300,"updated":0,"index":"1","data":"ey"},{"created":1556002866622282500,"updated":0,"index":"2","data":"Q=="}]
+	// [
+	//   {
+	//     "op": "add",
+	//     "path": "/1",
+	//     "value": {
+	//       "created": 1556002866622282500,
+	//       "updated": 0,
+	//       "index": "2",
+	//       "data": "Q=="
+	//     }
+	//   }
+	// ]
+	// https://json-patch-builder-online.github.io/
 	aI := map[string]interface{}{}
 	bI := map[string]interface{}{}
 	err := json.Unmarshal(a, &aI)
 	if err != nil {
-		return nil, errBadJSONDoc
+		return nil, err
 	}
 	err = json.Unmarshal(b, &bI)
 	if err != nil {
-		return nil, errBadJSONDoc
+		return nil, err
 	}
-	return diff(aI, bI, "", []JsonPatchOperation{})
+	return diff(aI, bI, "", []Operation{})
 }
 
 // Returns true if the values matches (must be json types)
@@ -147,8 +168,8 @@ func makePath(path string, newPart interface{}) string {
 	return path + "/" + key
 }
 
-// diff returns the (recursive) difference between a and b as an array of JsonPatchOperations.
-func diff(a, b map[string]interface{}, path string, patch []JsonPatchOperation) ([]JsonPatchOperation, error) {
+// diff returns the (recursive) difference between a and b as an array of Operations.
+func diff(a, b map[string]interface{}, path string, patch []Operation) ([]Operation, error) {
 	for key, bv := range b {
 		p := makePath(path, key)
 		av, ok := a[key]
@@ -181,7 +202,7 @@ func diff(a, b map[string]interface{}, path string, patch []JsonPatchOperation) 
 	return patch, nil
 }
 
-func handleValues(av, bv interface{}, p string, patch []JsonPatchOperation) ([]JsonPatchOperation, error) {
+func handleValues(av, bv interface{}, p string, patch []Operation) ([]Operation, error) {
 	var err error
 	switch at := av.(type) {
 	case map[string]interface{}:
@@ -224,8 +245,8 @@ func handleValues(av, bv interface{}, p string, patch []JsonPatchOperation) ([]J
 	return patch, nil
 }
 
-func compareArray(av, bv []interface{}, p string) []JsonPatchOperation {
-	retval := []JsonPatchOperation{}
+func compareArray(av, bv []interface{}, p string) []Operation {
+	retval := []Operation{}
 	//	var err error
 	for i, v := range av {
 		found := false
