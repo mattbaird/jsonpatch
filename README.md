@@ -1,31 +1,26 @@
 # jsonpatch
+
+[![Build Status][build-image]][build-url]
+
+
+[build-url]: https://travis-ci.com/benitogf/jsonpatch
+[build-image]: https://api.travis-ci.com/benitogf/jsonpatch.svg?branch=master&style=flat-square
+
 As per http://jsonpatch.com/ JSON Patch is specified in RFC 6902 from the IETF.
 
-JSON Patch allows you to generate JSON that describes changes you want to make to a document, so you don't have to send the whole doc. JSON Patch format is supported by HTTP PATCH method, allowing for standards based partial updates via REST APIs.
+an attempt to join the efforts made by [mattbaird](https://github.com/mattbaird/jsonpatch) and [evanphx](https://github.com/evanphx/json-patch)
 
-```bash
-go get github.com/mattbaird/jsonpatch
-```
+using [jsondiff](https://github.com/nsf/jsondiff) on the tests
 
-I tried some of the other "jsonpatch" go implementations, but none of them could diff two json documents and 
-generate format like jsonpatch.com specifies. Here's an example of the patch format:
 
-```json
-[
-  { "op": "replace", "path": "/baz", "value": "boo" },
-  { "op": "add", "path": "/hello", "value": ["world"] },
-  { "op": "remove", "path": "/foo"}
-]
+## Create Patch
 
-```
-The API is super simple
-#example
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/mattbaird/jsonpatch"
+	"github.com/benitogf/jsonpatch"
 )
 
 var simpleA = `{"a":100, "b":200, "c":"hello"}`
@@ -43,4 +38,35 @@ func main() {
 }
 ```
 
-This code needs more tests, as it's a highly recursive, type-fiddly monster. It's not a lot of code, but it has to deal with a lot of complexity.
+
+## Apply Patch
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/benitogf/jsonpatch"
+)
+
+func main() {
+	original := []byte(`{"name": "John", "age": 24, "height": 3.21}`)
+	patchJSON := []byte(`[
+		{"op": "replace", "path": "/name", "value": "Jane"},
+		{"op": "remove", "path": "/height"}
+	]`)
+
+	patch, err := jsonpatch.DecodePatch(patchJSON)
+	if err != nil {
+		panic(err)
+	}
+
+	modified, err := patch.Apply(original)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Original document: %s\n", original)
+	fmt.Printf("Modified document: %s\n", modified)
+}
+```
