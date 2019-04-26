@@ -1,6 +1,7 @@
 package jsonpatch
 
 import (
+	"encoding/json"
 	"sort"
 	"testing"
 
@@ -49,7 +50,7 @@ func TestOneIntReplace(t *testing.T) {
 	change := patch[0]
 	assert.Equal(t, change.Operation, "replace", "they should be equal")
 	assert.Equal(t, change.Path, "/b", "they should be equal")
-	var expected float64 = 100
+	var expected = json.Number("100")
 	assert.Equal(t, change.Value, expected, "they should be equal")
 }
 

@@ -1,9 +1,11 @@
 package jsonpatch
 
 import (
-	"github.com/stretchr/testify/assert"
+	"encoding/json"
 	"sort"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var complexBase = `{"a":100, "b":[{"c1":"hello", "d1":"foo"},{"c2":"hello2", "d2":"foo2"} ], "e":{"f":200, "g":"h", "i":"j"}}`
@@ -35,7 +37,7 @@ func TestComplexOneIntReplace(t *testing.T) {
 	change := patch[0]
 	assert.Equal(t, "replace", change.Operation, "they should be equal")
 	assert.Equal(t, "/e/f", change.Path, "they should be equal")
-	var expected float64 = 100
+	var expected = json.Number("100")
 	assert.Equal(t, expected, change.Value, "they should be equal")
 }
 

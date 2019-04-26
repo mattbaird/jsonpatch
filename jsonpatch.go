@@ -79,14 +79,19 @@ func CreatePatch(a, b []byte) ([]Operation, error) {
 	// https://json-patch-builder-online.github.io/
 	aI := map[string]interface{}{}
 	bI := map[string]interface{}{}
-	err := json.Unmarshal(a, &aI)
+	d := json.NewDecoder(bytes.NewReader(a))
+	d.UseNumber()
+	err := d.Decode(&aI)
 	if err != nil {
 		return nil, err
 	}
-	err = json.Unmarshal(b, &bI)
+	db := json.NewDecoder(bytes.NewReader(b))
+	db.UseNumber()
+	err = db.Decode(&bI)
 	if err != nil {
 		return nil, err
 	}
+
 	return diff(aI, bI, "", []Operation{})
 }
 
@@ -103,8 +108,8 @@ func matchesValue(av, bv interface{}) bool {
 		if bt == at {
 			return true
 		}
-	case float64:
-		bt := bv.(float64)
+	case json.Number:
+		bt := bv.(json.Number)
 		if bt == at {
 			return true
 		}
@@ -211,7 +216,7 @@ func handleValues(av, bv interface{}, p string, patch []Operation) ([]Operation,
 		if err != nil {
 			return nil, err
 		}
-	case string, float64, bool:
+	case string, json.Number, bool:
 		if !matchesValue(av, bv) {
 			patch = append(patch, NewPatch("replace", p, bv))
 		}
