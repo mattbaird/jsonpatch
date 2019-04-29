@@ -5,16 +5,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
 var errBadJSONDoc = fmt.Errorf("Invalid JSON Document")
+var errBadMergeTypes = fmt.Errorf("Mismatched JSON Documents")
 
 // Operation operation struct
 type Operation struct {
 	Operation string      `json:"op"`
 	Path      string      `json:"path"`
 	Value     interface{} `json:"value,omitempty"`
+}
+
+// resemblesJSONArray indicates whether the byte-slice "appears" to be
+// a JSON array or not.
+// False-positives are possible, as this function does not check the internal
+// structure of the array. It only checks that the outer syntax is present and
+// correct.
+func resemblesJSONArray(input []byte) bool {
+	input = bytes.TrimSpace(input)
+
+	hasPrefix := bytes.HasPrefix(input, []byte("["))
+	hasSuffix := bytes.HasSuffix(input, []byte("]"))
+
+	return hasPrefix && hasSuffix
 }
 
 // JSON returns a patch operation Json representation
@@ -61,22 +77,81 @@ func NewPatch(operation, path string, value interface{}) Operation {
 //
 // An error will be returned if any of the two documents are invalid.
 func CreatePatch(a, b []byte) ([]Operation, error) {
-	// TODO:
-	// [{"created":1556002860865228300,"updated":0,"index":"1","data":"ey"}]
-	// [{"created":1556002860865228300,"updated":0,"index":"1","data":"ey"},{"created":1556002866622282500,"updated":0,"index":"2","data":"Q=="}]
-	// [
-	//   {
-	//     "op": "add",
-	//     "path": "/1",
-	//     "value": {
-	//       "created": 1556002866622282500,
-	//       "updated": 0,
-	//       "index": "2",
-	//       "data": "Q=="
-	//     }
-	//   }
-	// ]
-	// https://json-patch-builder-online.github.io/
+	if bytes.Equal(a, b) {
+		return []Operation{}, nil
+	}
+	originalResemblesArray := resemblesJSONArray(a)
+	modifiedResemblesArray := resemblesJSONArray(b)
+	// Do both byte-slices seem like JSON arrays?
+	if originalResemblesArray && modifiedResemblesArray {
+		original := []json.RawMessage{}
+		modified := []json.RawMessage{}
+
+		d := json.NewDecoder(bytes.NewReader(a))
+		d.UseNumber()
+		err := d.Decode(&original)
+		if err != nil {
+			return nil, err
+		}
+		db := json.NewDecoder(bytes.NewReader(b))
+		db.UseNumber()
+		err = db.Decode(&modified)
+		if err != nil {
+			return nil, err
+		}
+
+		patch := []Operation{}
+		path := ""
+
+		keysModified := map[int]bool{}
+		keysOriginal := map[int]bool{}
+		for k := range original {
+			keysOriginal[k] = true
+		}
+
+		for key, bv := range modified {
+			keysModified[key] = true
+			p := makePath(path, key)
+			_, found := keysOriginal[key]
+			// value was added
+			if !found {
+				patch = append(patch, NewPatch("add", p, bv))
+				continue
+			}
+			av := original[key]
+			// If types have changed, replace completely
+			if reflect.TypeOf(av) != reflect.TypeOf(bv) {
+				patch = append(patch, NewPatch("replace", p, bv))
+				continue
+			}
+			// Types are the same, compare values
+			patch, err = diffObjects(av, bv, "/"+strconv.Itoa(key)+"/", patch)
+			if err != nil {
+				return nil, err
+			}
+		}
+		// Now add all deleted values as nil
+		for key := range original {
+			_, found := keysModified[key]
+			if !found {
+				p := makePath(path, key)
+				patch = append(patch, NewPatch("remove", p, nil))
+			}
+		}
+
+		return patch, nil
+	}
+
+	// Are both byte-slices are not arrays? Then they are likely JSON objects...
+	if !originalResemblesArray && !modifiedResemblesArray {
+		return diffObjects(a, b, "", []Operation{})
+	}
+
+	// None of the above? Then return an error because of mismatched types.
+	return nil, errBadMergeTypes
+}
+
+func diffObjects(a, b []byte, key string, patch []Operation) ([]Operation, error) {
 	aI := map[string]interface{}{}
 	bI := map[string]interface{}{}
 	d := json.NewDecoder(bytes.NewReader(a))
@@ -92,7 +167,7 @@ func CreatePatch(a, b []byte) ([]Operation, error) {
 		return nil, err
 	}
 
-	return diff(aI, bI, "", []Operation{})
+	return diff(aI, bI, key, patch)
 }
 
 // Returns true if the values matches (must be json types)
