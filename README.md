@@ -8,8 +8,11 @@ As per http://jsonpatch.com JSON Patch is specified in RFC 6902 from the IETF.
 
 JSON Patch allows you to generate JSON that describes changes you want to make to a document, so you don't have to send the whole doc. JSON Patch format is supported by HTTP PATCH method, allowing for standards based partial updates via REST APIs.
 
-```console
-go get gomodules.xyz/jsonpatch/v2
+## Usage ##
+
+```go
+import "gomodules.xyz/jsonpatch/v2" // with go modules enabled (GO111MODULE=on or outside GOPATH)
+import "gomodules.xyz/jsonpatch"    // with go modules disabled
 ```
 
 I tried some of the other "jsonpatch" go implementations, but none of them could diff two json documents and generate format like jsonpatch.com specifies. Here's an example of the patch format:
