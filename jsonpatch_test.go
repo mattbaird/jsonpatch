@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/appscode/jsonpatch"
 	jp "github.com/evanphx/json-patch"
 	"github.com/stretchr/testify/assert"
+	"gomodules.xyz/jsonpatch"
 )
 
 var simpleA = `{"a":100, "b":200, "c":"hello"}`
