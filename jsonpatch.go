@@ -58,8 +58,8 @@ func NewPatch(operation, path string, value interface{}) Operation {
 //
 // An error will be returned if any of the two documents are invalid.
 func CreatePatch(a, b []byte) ([]Operation, error) {
-	aI := map[string]interface{}{}
-	bI := map[string]interface{}{}
+	var aI interface{}
+	var bI interface{}
 	err := json.Unmarshal(a, &aI)
 	if err != nil {
 		return nil, errBadJSONDoc
@@ -68,7 +68,7 @@ func CreatePatch(a, b []byte) ([]Operation, error) {
 	if err != nil {
 		return nil, errBadJSONDoc
 	}
-	return diff(aI, bI, "", []Operation{})
+	return handleValues(aI, bI, "", []Operation{})
 }
 
 // Returns true if the values matches (must be json types)

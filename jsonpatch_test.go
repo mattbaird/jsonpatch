@@ -704,7 +704,6 @@ var (
 }`
 )
 
-
 var (
 	oldNestedObj = `{
   "apiVersion": "kubedb.com/v1alpha1",
@@ -737,7 +736,6 @@ var (
   }
 }`
 )
-
 
 func TestCreatePatch(t *testing.T) {
 	cases := []struct {
@@ -779,7 +777,10 @@ func TestCreatePatch(t *testing.T) {
 		{"Kubernetes:Annotations", oldDeployment, newDeployment},
 		// crd with nested object
 		{"Nested Member Object", oldNestedObj, newNestedObj},
+		{"Array at root", `[{"asdf":"qwerty"}]`, `[{"asdf":"bla"},{"asdf":"zzz"}]`},
+		{"Empty array at root", `[]`, `[{"asdf":"bla"},{"asdf":"zzz"}]`},
 	}
+
 	for _, c := range cases {
 		t.Run(c.name+"[src->dst]", func(t *testing.T) {
 			check(t, c.src, c.dst)
