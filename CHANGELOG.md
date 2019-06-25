@@ -1,7 +1,7 @@
 # Change Log
 
-## [0.2.0](https://github.com/gomodules/jsonpatch/tree/0.2.0) (2019-06-25)
-[Full Changelog](https://github.com/gomodules/jsonpatch/compare/1.0.0...0.2.0)
+## [v2.0.0](https://github.com/gomodules/jsonpatch/tree/v2.0.0) (2019-06-25)
+[Full Changelog](https://github.com/gomodules/jsonpatch/compare/1.0.0...v2.0.0)
 
 **Merged pull requests:**
 

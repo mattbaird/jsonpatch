@@ -6,7 +6,7 @@ import (
 
 	jp "github.com/evanphx/json-patch"
 	"github.com/stretchr/testify/assert"
-	"gomodules.xyz/jsonpatch"
+	"gomodules.xyz/jsonpatch/v2"
 )
 
 var simpleA = `{"a":100, "b":200, "c":"hello"}`
