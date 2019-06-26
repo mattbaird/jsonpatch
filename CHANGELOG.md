@@ -1,10 +1,12 @@
 # Change Log
 
-## [v2.0.0](https://github.com/gomodules/jsonpatch/tree/v2.0.0) (2019-06-25)
+## [v2.0.0](https://github.com/gomodules/jsonpatch/tree/v2.0.0) (2019-06-26)
 [Full Changelog](https://github.com/gomodules/jsonpatch/compare/1.0.0...v2.0.0)
 
 **Merged pull requests:**
 
+- Use Major subdirectory structure to maintain dep compatiability [\#20](https://github.com/gomodules/jsonpatch/pull/20) ([tamalsaha](https://github.com/tamalsaha))
+- Prepare v2 release [\#19](https://github.com/gomodules/jsonpatch/pull/19) ([tamalsaha](https://github.com/tamalsaha))
 - Update go.mod and remove vendor folder [\#18](https://github.com/gomodules/jsonpatch/pull/18) ([tamalsaha](https://github.com/tamalsaha))
 - Change package path to gomodules.xyz/jsonpath [\#17](https://github.com/gomodules/jsonpatch/pull/17) ([tamalsaha](https://github.com/tamalsaha))
 - \[Emergency\] correct array index in backtrace [\#16](https://github.com/gomodules/jsonpatch/pull/16) ([kdada](https://github.com/kdada))
