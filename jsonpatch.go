@@ -115,13 +115,13 @@ func CreatePatch(a, b []byte) ([]Operation, error) {
 			_, found := keysOriginal[key]
 			// value was added
 			if !found {
-				patch = append(patch, NewPatch("add", p, bv))
+				patch = append([]Operation{NewPatch("add", p, bv)}, patch...)
 				continue
 			}
 			av := original[key]
 			// If types have changed, replace completely
 			if reflect.TypeOf(av) != reflect.TypeOf(bv) {
-				patch = append(patch, NewPatch("replace", p, bv))
+				patch = append([]Operation{NewPatch("replace", p, bv)}, patch...)
 				continue
 			}
 			// Types are the same, compare values
@@ -135,7 +135,7 @@ func CreatePatch(a, b []byte) ([]Operation, error) {
 			_, found := keysModified[key]
 			if !found {
 				p := makePath(path, key)
-				patch = append(patch, NewPatch("remove", p, nil))
+				patch = append([]Operation{NewPatch("remove", p, nil)}, patch...)
 			}
 		}
 
@@ -255,12 +255,12 @@ func diff(a, b map[string]interface{}, path string, patch []Operation) ([]Operat
 		av, ok := a[key]
 		// value was added
 		if !ok {
-			patch = append(patch, NewPatch("add", p, bv))
+			patch = append([]Operation{NewPatch("add", p, bv)}, patch...)
 			continue
 		}
 		// If types have changed, replace completely
 		if reflect.TypeOf(av) != reflect.TypeOf(bv) {
-			patch = append(patch, NewPatch("replace", p, bv))
+			patch = append([]Operation{NewPatch("replace", p, bv)}, patch...)
 			continue
 		}
 		// Types are the same, compare values
@@ -276,7 +276,7 @@ func diff(a, b map[string]interface{}, path string, patch []Operation) ([]Operat
 		if !found {
 			p := makePath(path, key)
 
-			patch = append(patch, NewPatch("remove", p, nil))
+			patch = append([]Operation{NewPatch("remove", p, nil)}, patch...)
 		}
 	}
 	return patch, nil
@@ -293,13 +293,13 @@ func handleValues(av, bv interface{}, p string, patch []Operation) ([]Operation,
 		}
 	case string, json.Number, bool:
 		if !matchesValue(av, bv) {
-			patch = append(patch, NewPatch("replace", p, bv))
+			patch = append([]Operation{NewPatch("replace", p, bv)}, patch...)
 		}
 	case []interface{}:
 		bt, ok := bv.([]interface{})
 		if !ok {
 			// array replaced by non-array
-			patch = append(patch, NewPatch("replace", p, bv))
+			patch = append([]Operation{NewPatch("replace", p, bv)}, patch...)
 		} else if len(at) != len(bt) {
 			// arrays are not the same length
 			patch = append(patch, compareArray(at, bt, p)...)
@@ -317,7 +317,7 @@ func handleValues(av, bv interface{}, p string, patch []Operation) ([]Operation,
 		case nil:
 			// Both nil, fine.
 		default:
-			patch = append(patch, NewPatch("add", p, bv))
+			patch = append([]Operation{NewPatch("add", p, bv)}, patch...)
 		}
 	default:
 		panic(fmt.Sprintf("Unknown type:%T ", av))
@@ -337,7 +337,7 @@ func compareArray(av, bv []interface{}, p string) []Operation {
 			}
 		}
 		if !found {
-			retval = append(retval, NewPatch("remove", makePath(p, i), nil))
+			retval = append([]Operation{NewPatch("remove", makePath(p, i), nil)}, retval...)
 		}
 	}
 
@@ -350,7 +350,7 @@ func compareArray(av, bv []interface{}, p string) []Operation {
 			}
 		}
 		if !found {
-			retval = append(retval, NewPatch("add", makePath(p, i), v))
+			retval = append([]Operation{NewPatch("add", makePath(p, i), v)}, retval...)
 		}
 	}
 

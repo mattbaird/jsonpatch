@@ -17,6 +17,16 @@ var simplef = `{"a":100, "b":100, "d":"foo"}`
 var simpleG = `{"a":100, "b":null, "d":"foo"}`
 var empty = `{}`
 
+var collection = `[{"created":1564944548180294000,"updated":0,"index":"15b7ccc66f7878a8","data":"eyJuYW1lIjoibmFtZTEifQ=="},{"created":1564944548172292600,"updated":0,"index":"15b7ccc66efe6194","data":"eyJuYW1lIjoibmFtZTAifQ=="}]`
+var emptyCollection = `[]`
+
+func TestMultipleRemove(t *testing.T) {
+	patch, e := CreatePatch([]byte(collection), []byte(emptyCollection))
+	assert.NoError(t, e)
+	assert.Equal(t, len(patch), 2, "the patch should be the same lenght as the collection")
+	assert.Equal(t, patch[0].Path, "/1", "the patch should have descending order by path")
+}
+
 func TestOneNullReplace(t *testing.T) {
 	patch, e := CreatePatch([]byte(simplef), []byte(simpleG))
 	assert.NoError(t, e)
