@@ -125,17 +125,26 @@ func matchesValue(av, bv interface{}) bool {
 	return false
 }
 
+// From http://tools.ietf.org/html/rfc6901#section-4 :
+//
+// Evaluation of each reference token begins by decoding any escaped
+// character sequence.  This is performed by first transforming any
+// occurrence of the sequence '~1' to '/', and then transforming any
+// occurrence of the sequence '~0' to '~'.
+//   TODO decode support:
+//   var rfc6901Decoder = strings.NewReplacer("~1", "/", "~0", "~")
+
+var rfc6901Encoder = strings.NewReplacer("~", "~0", "/", "~1")
+
 func makePath(path string, newPart interface{}) string {
+	key := rfc6901Encoder.Replace(fmt.Sprintf("%v", newPart))
 	if path == "" {
-		return fmt.Sprintf("/%v", newPart)
-	} else {
-		if strings.HasSuffix(path, "/") {
-			path = path + fmt.Sprintf("%v", newPart)
-		} else {
-			path = path + fmt.Sprintf("/%v", newPart)
-		}
+		return "/" + key
 	}
-	return path
+	if strings.HasSuffix(path, "/") {
+		return path + key
+	}
+	return path + "/" + key
 }
 
 // diff returns the (recursive) difference between a and b as an array of JsonPatchOperations.
@@ -186,13 +195,16 @@ func handleValues(av, bv interface{}, p string, patch []JsonPatchOperation) ([]J
 			patch = append(patch, NewPatch("replace", p, bv))
 		}
 	case []interface{}:
-		bt := bv.([]interface{})
-		if len(at) != len(bt) {
-			// arrays are not the same
+		bt, ok := bv.([]interface{})
+		if !ok {
+			// array replaced by non-array
+			patch = append(patch, NewPatch("replace", p, bv))
+		} else if len(at) != len(bt) {
+			// arrays are not the same length
 			patch = append(patch, compareArray(at, bt, p)...)
 
 		} else {
-			for i, _ := range bt {
+			for i := range bt {
 				patch, err = handleValues(at[i], bt[i], makePath(p, i), patch)
 				if err != nil {
 					return nil, err
