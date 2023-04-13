@@ -67,3 +67,26 @@ func TestArrayRemoveSpaceInbetween(t *testing.T) {
 	assert.Equal(t, "/persons/2", change.Path, "they should be equal")
 	assert.Equal(t, nil, change.Value, "they should be equal")
 }
+
+var (
+	arrayRemoveMultiBase = `{
+	"persons": [{"name":"Ed"},{"name":"Ee"},{"name":"Ef"},{"name":"Sally"},{}]
+}`
+
+	arrayRemoveMultisUpdated = `{
+  "persons": [{"name":"Ef"},{},{"name":"Sally"},{}]
+}`
+)
+
+// TestArrayRemoveMulti tests removing multi groups. This tests that the correct index is removed
+func TestArrayRemoveMulti(t *testing.T) {
+	patch, e := CreatePatch([]byte(arrayRemoveMultiBase), []byte(arrayRemoveMultisUpdated))
+	assert.NoError(t, e)
+	t.Log("Patch:", patch)
+	assert.Equal(t, 3, len(patch), "they should be equal")
+
+	change := patch[0]
+	assert.Equal(t, "remove", change.Operation, "they should be equal")
+	assert.Equal(t, "/persons/1", change.Path, "they should be equal")
+	assert.Equal(t, nil, change.Value, "they should be equal")
+}
