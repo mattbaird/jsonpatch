@@ -68,7 +68,17 @@ func CreatePatch(a, b []byte) ([]JsonPatchOperation, error) {
 		return nil, errBadJSONDoc
 	}
 
-	return handleValues(aI, bI, "", []JsonPatchOperation{})
+	return MakePatch(aI, bI)
+}
+
+// MakePatch creates a patch as specified in http://jsonpatch.com/
+//
+// 'a' is original, 'b' is the modified document. Both are to be given as interfaces.
+// The function will return an array of JsonPatchOperations
+//
+// An error will be returned if any of the two documents are invalid.
+func MakePatch(a, b interface{}) ([]JsonPatchOperation, error) {
+	return handleValues(a, b, "", []JsonPatchOperation{})
 }
 
 // Returns true if the values matches (must be json types)
