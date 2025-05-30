@@ -15,10 +15,14 @@ var (
 	arrayUpdated = `{
   "persons": [{"name":"Ed"},{},{}]
 }`
+
+	arrayTestCollections = Collections{
+		Arrays: []string{"$.persons"},
+	}
 )
 
-func TestArrayAddMultipleEmptyObjects(t *testing.T) {
-	patch, e := CreatePatch([]byte(arrayBase), []byte(arrayUpdated))
+func TestArrayAddMultipleEmptyObjectsExactMatch(t *testing.T) {
+	patch, e := CreatePatch([]byte(arrayBase), []byte(arrayUpdated), arrayTestCollections, PatchStrategyExactMatch)
 	assert.NoError(t, e)
 	t.Log("Patch:", patch)
 	assert.Equal(t, 1, len(patch), "they should be equal")
@@ -27,11 +31,11 @@ func TestArrayAddMultipleEmptyObjects(t *testing.T) {
 	change := patch[0]
 	assert.Equal(t, "add", change.Operation, "they should be equal")
 	assert.Equal(t, "/persons/2", change.Path, "they should be equal")
-	assert.Equal(t, map[string]interface{}{}, change.Value, "they should be equal")
+	assert.Equal(t, map[string]any{}, change.Value, "they should be equal")
 }
 
-func TestArrayRemoveMultipleEmptyObjects(t *testing.T) {
-	patch, e := CreatePatch([]byte(arrayUpdated), []byte(arrayBase))
+func TestArrayRemoveMultipleEmptyObjectsExactMatch(t *testing.T) {
+	patch, e := CreatePatch([]byte(arrayUpdated), []byte(arrayBase), arrayTestCollections, PatchStrategyExactMatch)
 	assert.NoError(t, e)
 	t.Log("Patch:", patch)
 	assert.Equal(t, 1, len(patch), "they should be equal")
@@ -56,7 +60,7 @@ var (
 // TestArrayRemoveSpaceInbetween tests removing one blank item from a group blanks which is in between non blank items which also end with a blank item. This tests that the correct index is removed
 func TestArrayRemoveSpaceInbetween(t *testing.T) {
 	t.Skip("This test fails. TODO change compareArray algorithm to match by index instead of by object equality")
-	patch, e := CreatePatch([]byte(arrayWithSpacesBase), []byte(arrayWithSpacesUpdated))
+	patch, e := CreatePatch([]byte(arrayWithSpacesBase), []byte(arrayWithSpacesUpdated), arrayTestCollections, PatchStrategyExactMatch)
 	assert.NoError(t, e)
 	t.Log("Patch:", patch)
 	assert.Equal(t, 1, len(patch), "they should be equal")
@@ -80,7 +84,7 @@ var (
 
 // TestArrayRemoveMulti tests removing multi groups. This tests that the correct index is removed
 func TestArrayRemoveMulti(t *testing.T) {
-	patch, e := CreatePatch([]byte(arrayRemoveMultiBase), []byte(arrayRemoveMultisUpdated))
+	patch, e := CreatePatch([]byte(arrayRemoveMultiBase), []byte(arrayRemoveMultisUpdated), arrayTestCollections, PatchStrategyExactMatch)
 	assert.NoError(t, e)
 	t.Log("Patch:", patch)
 	assert.Equal(t, 3, len(patch), "they should be equal")
